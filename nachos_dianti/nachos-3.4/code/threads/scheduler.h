@@ -31,6 +31,11 @@ class Scheduler {
   private:
     List *readyList;  		// queue of threads that are ready to run,
 				// but not running
+//modif by fang//
+    List *Q1TimeSlices; //根据线程的用的时间片数量放置到相应对列（0,2）到Q1中
+    List *Q2TimeSlices; //[2,6)放置到队列Q2中
+    List *Q3TimeSlices; //[6,..]放置到队列Q3中
+////
 };
 
 #endif // SCHEDULER_H

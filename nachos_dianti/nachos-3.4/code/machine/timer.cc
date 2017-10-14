@@ -61,11 +61,13 @@ Timer::Timer(VoidFunctionPtr timerHandler, int callArg, bool doRandom)
 void 
 Timer::TimerExpired() 
 {
+    //事实上是先执行这个tick的中断处理函数，直到所有的中断处理完后，才yield当前线程
     // schedule the next timer device interrupt
     interrupt->Schedule(TimerHandler, (int) this, TimeOfNextInterrupt(), 
 		TimerInt);
-
-    // invoke the Nachos interrupt handler for this device
+    //modify by fang
+    currentThread->usedTimeSlices++;//一个时间片结束后，当前线程占用的时间片+1
+    ////
     (*handler)(arg);
 }
 
@@ -78,8 +80,11 @@ Timer::TimerExpired()
 int 
 Timer::TimeOfNextInterrupt() 
 {
+    //if (randomize)
+	//return 1 + (Random() % (TimerTicks * 2));
+    //返回固定的时间周期中断
     if (randomize)
-	return 1 + (Random() % (TimerTicks * 2));
+    return ((TimerTicks));
     else
 	return TimerTicks; 
 }

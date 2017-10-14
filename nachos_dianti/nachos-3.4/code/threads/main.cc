@@ -85,7 +85,7 @@ main(int argc, char **argv)
 					// for a particular command
 
     DEBUG('t', "Entering main");
-    (void) Initialize(argc, argv);
+    (void) Initialize(argc, argv);//函数一开始执行Initialize
     
 #ifdef THREADS
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
@@ -101,7 +101,7 @@ main(int argc, char **argv)
       }
     }
 
-    ThreadTest();
+    ThreadTest();//然后开始执行ThreadTest()
 #endif
 
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
@@ -159,6 +159,7 @@ main(int argc, char **argv)
 #endif // NETWORK
     }
 
+    //最后到这
     currentThread->Finish();	// NOTE: if the procedure "main" 
 				// returns, then the program "nachos"
 				// will exit (as any other normal program

@@ -128,6 +128,14 @@ class Thread {
 
     AddrSpace *space;			// User code this thread is running.
 #endif
+////////////////////////////////// modify by fang//////////////////////////////////////
+    public:
+        int usedTimeSlices;         //记录该线程已经用的时间片
+        //char* getName(){return name;}
+     //get set的好处有：get的话不仅仅可以得到成员变量，也可以加一些DIY信息
+     //get、set组组可以令成员变量设置读写权限   
+
+///////////////////////////////////////////////////////////////////////////////////////
 };
 
 // Magical machine-dependent routines, defined in switch.s
