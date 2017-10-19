@@ -57,5 +57,5 @@ class Statistics {
 #define ConsoleTime 	100	// time to read or write one character
 #define NetworkTime 	100   	// time to send or receive one packet
 //#define TimerTicks 	100    	// (average) time between timer interrupts
-#define TimerTicks  3//        每3 tick加入一时间中断
+#define TimerTicks  5//        每5 tick加入一时间中断
 #endif // STATS_H

@@ -45,7 +45,7 @@ class Semaphore {
     void P();	 // these are the only operations on a semaphore
     void V();	 // they are both *atomic*
     
-  private:
+  
     char* name;        // useful for debugging
     int value;         // semaphore value, always >= 0
     List *queue;       // threads waiting in P() for the value to be > 0
@@ -77,8 +77,11 @@ class Lock {
 					// checking in Release, and in
 					// Condition variable ops below.
 
-  private:
+  
     char* name;				// for debugging
+    Semaphore* lockSemaphore;
+    Thread* heldThread;
+    List* waitQueue;
     // plus some other stuff you'll need to define
 };
 
@@ -131,6 +134,7 @@ class Condition {
 
   private:
     char* name;
+    List* waitQueue;
     // plus some other stuff you'll need to define
 };
 #endif // SYNCH_H

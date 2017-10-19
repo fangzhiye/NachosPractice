@@ -177,7 +177,8 @@ Interrupt::OneTick()
     //因为是多级反馈队列，所以每个进程可以使用2 6 14的时间片才放弃对CPU的使用
     if(currentThread->usedTimeSlices == 2 || currentThread->usedTimeSlices == 6 ||currentThread->usedTimeSlices == 14 ){
        // printf("haha");
-        printf("\n交换线程\n");
+        printf("\nTimer interupt timeslices end switch thread\n");
+        printf("\n");
        // DEBUG("交换线程");
        // DEBUG('t', "交换线程");
         currentThread->Yield();

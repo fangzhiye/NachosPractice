@@ -226,7 +226,8 @@ Thread::Sleep ()
     Thread *nextThread;
     
     ASSERT(this == currentThread);
-    ASSERT(interrupt->getLevel() == IntOff);
+  //  interrupt->SetLevel(IntOff);
+    ASSERT(interrupt->getLevel() == IntOff);//如果是IntOff则继续执行 
     
     DEBUG('t', "Sleeping thread \"%s\"\n", getName());
 
