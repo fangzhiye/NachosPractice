@@ -86,7 +86,7 @@ void barrierTest(int n){
         lock->Release();
     }
     printf("currentThread:%s, continue to run...\n",currentThread->getName());
-    currentThread->Print();
+    //currentThread->Print();
 }
 
 

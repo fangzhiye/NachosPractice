@@ -15,6 +15,7 @@
 int
 main()
 {
-    Halt();
+   //cc Halt();
+	//Halt();
     /* not reached */
 }

@@ -19,26 +19,58 @@
 // 	Run a user program.  Open the executable, load it into
 //	memory, and jump to it.
 //----------------------------------------------------------------------
-
+void ForkThread(){
+    printf("start second thread\n");
+   // printf("%s\n",currentThread->getName() );
+    machine->Run();
+}
 void
 StartProcess(char *filename)
 {
     OpenFile *executable = fileSystem->Open(filename);
     AddrSpace *space;
 
+    //OpenFile *executable2 = fileSystem->Open("..//test//testLab4");
+ //   OpenFile *executable2 = fileSystem->Open(filename);
+ //   AddrSpace *space2;
+
+  //  Thread* thread = new Thread("second_thread");
     if (executable == NULL) {
 	printf("Unable to open file %s\n", filename);
 	return;
     }
+  //  if (executable2 == NULL) {
+  //  printf("Unable to open file %s\n", filename);
+ //   return;
+ //   }
+    printf("initial first thread address\n");
     space = new AddrSpace(executable);    
+    space->InitRegisters();     // set the initial register values
+    space->RestoreState();
+   // printf("initial second thread address space\n");
+  //  space2 = new AddrSpace(executable2);
+  //    //printf("789\n");
+    //thread->Fork(ForkThread,1);
+   // printf("12789\n");
+   // space2->InitRegisters();     // set the initial register values
+   // space2->RestoreState();      
+    //thread->space = space2;
+
     currentThread->space = space;
-
+   
+  
+   // 
+   // currentThread->Yield();
     delete executable;			// close file
-
-    space->InitRegisters();		// set the initial register values
-    space->RestoreState();		// load page table register
-
+  //  delete executable2;  
+    
+    printf("start first thread\n");
+    
+ //   space->RestoreState();      // load page table register
+    //我在切换线程的时候也要切换过来Machine的PageTable[]
     machine->Run();			// jump to the user progam
+
+    
     ASSERT(FALSE);			// machine->Run never returns;
 					// the address space exits
 					// by doing the syscall "exit"

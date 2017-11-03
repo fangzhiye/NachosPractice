@@ -72,13 +72,14 @@ AddrSpace::AddrSpace(OpenFile *executable)
     ASSERT(noffH.noffMagic == NOFFMAGIC);
 
 // how big is address space?
+    //计算下地址空间有多大
     size = noffH.code.size + noffH.initData.size + noffH.uninitData.size 
 			+ UserStackSize;	// we need to increase the size
 						// to leave room for the stack
-    numPages = divRoundUp(size, PageSize);
+    numPages = divRoundUp(size, PageSize);//要多少个页面
     size = numPages * PageSize;
 
-    ASSERT(numPages <= NumPhysPages);		// check we're not trying
+    //ASSERT(numPages <= NumPhysPages);		// check we're not trying
 						// to run anything too big --
 						// at least until we have
 						// virtual memory
@@ -89,8 +90,9 @@ AddrSpace::AddrSpace(OpenFile *executable)
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
 	pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
-	pageTable[i].physicalPage = i;
-	pageTable[i].valid = TRUE;
+	//pageTable[i].physicalPage = i;
+   // pageTable[i].physicalPage = machine->find();
+	pageTable[i].valid = FALSE;
 	pageTable[i].use = FALSE;
 	pageTable[i].dirty = FALSE;
 	pageTable[i].readOnly = FALSE;  // if the code segment was entirely on 
@@ -100,21 +102,59 @@ AddrSpace::AddrSpace(OpenFile *executable)
     
 // zero out the entire address space, to zero the unitialized data segment 
 // and the stack segment
-    bzero(machine->mainMemory, size);
-
+    //因为我在内存中要存在多个线程的话，所以我并不能每载入一个程序就将内存初始化为0
+    //重要
+    //bzero(machine->mainMemory, size);
+    fileSystem->Create("virtual_memory",size);
+    OpenFile *openfile = fileSystem->Open("virtual_memory");
+    if(openfile == NULL)ASSERT(false);
+    if(noffH.code.size > 0){
+        int pos1 = noffH.code.inFileAddr;
+        int pos2 = noffH.code.virtualAddr;
+        char current_char;
+        for(int j=0;j<noffH.code.size;j++){
+            executable->ReadAt(&(current_char),1,pos1++);
+            openfile->WriteAt(&(current_char),1,pos2++);
+        }
+    }
+    if (noffH.initData.size > 0){
+        int pos1 = noffH.initData.inFileAddr;
+        int pos2 = noffH.initData.virtualAddr;
+        char current_char;
+        for(int j=0;j < noffH.initData.size;j++){
+            executable->ReadAt(&(current_char),1,pos1++);
+            openfile->WriteAt(&(current_char),1,pos2++);
+        }
+    }
+    delete openfile;
 // then, copy in the code and data segments into memory
-    if (noffH.code.size > 0) {
+  /*  if (noffH.code.size > 0) {
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
 			noffH.code.virtualAddr, noffH.code.size);
-        executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
-			noffH.code.size, noffH.code.inFileAddr);
+        int pos = noffH.code.inFileAddr;
+        for(int j = 0; j < noffH.code.size; j++){
+            int current_vpn = (noffH.code.virtualAddr+j)/PageSize;
+            int current_offset = (noffH.code.virtualAddr+j)%PageSize;
+            int paddr = pageTable[current_vpn].physicalPage * PageSize + current_offset;
+            executable->ReadAt(&(machine->mainMemory[paddr]),
+           1,pos++);
+
+        }
+        
     }
     if (noffH.initData.size > 0) {
         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
 			noffH.initData.virtualAddr, noffH.initData.size);
-        executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
-			noffH.initData.size, noffH.initData.inFileAddr);
-    }
+        int pos = noffH.initData.inFileAddr;
+        for(int j=0;j<noffH.initData.size;j++){
+            int current_vpn = (noffH.initData.virtualAddr+j)/PageSize;
+            int current_offset = (noffH.initData.virtualAddr+j)%PageSize;
+            int paddr = pageTable[current_vpn].physicalPage*PageSize+current_offset;
+            executable->ReadAt(&(machine->mainMemory[paddr]),
+            1,pos++);
+        }
+       
+    }*/
 
 }
 
@@ -169,7 +209,10 @@ AddrSpace::InitRegisters()
 //----------------------------------------------------------------------
 
 void AddrSpace::SaveState() 
-{}
+{
+    for(int i=0;i < TLBSize;i++)
+        machine->tlb[i].valid = FALSE;
+}
 
 //----------------------------------------------------------------------
 // AddrSpace::RestoreState

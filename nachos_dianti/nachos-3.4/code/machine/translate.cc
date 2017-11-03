@@ -33,7 +33,6 @@
 #include "machine.h"
 #include "addrspace.h"
 #include "system.h"
-
 // Routines for converting Words and Short Words to and from the
 // simulated machine's format of little endian.  These end up
 // being NOPs when the host machine is also little endian (DEC and Intel).
@@ -200,8 +199,12 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     }
     
     // we must have either a TLB or a page table, but not both!
-    ASSERT(tlb == NULL || pageTable == NULL);	
-    ASSERT(tlb != NULL || pageTable != NULL);	
+  //  printf("78757\n");
+  //  ASSERT(tlb==NULL);
+    //ASSERT(tlb == NULL || pageTable == NULL);	
+   // printf("2fa\n");
+    ASSERT(tlb != NULL || pageTable != NULL);
+  //  printf("3cd\n");	
 
 // calculate the virtual page number, and offset within the page,
 // from the virtual address
@@ -222,15 +225,27 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     } else {
         for (entry = NULL, i = 0; i < TLBSize; i++)
     	    if (tlb[i].valid && (tlb[i].virtualPage == vpn)) {
-		entry = &tlb[i];			// FOUND!
+			entry = &tlb[i];
+			int partition = LRU_queue[i];
+			LRU_queue[i]=1;			
+			       			// FOUND!
+			stats->numTLBHit++;
+			for(int j=0;j < TLBSize; j++){
+				if(j==i)continue;
+				if(LRU_queue[j] == -1)continue;
+				//如果大于的话也++很快就大于TLBSize
+				if(LRU_queue[j] < partition)LRU_queue[j]++;
+			}
 		break;
 	    }
-	if (entry == NULL) {				// not found
+	if (entry == NULL) {
+					// not found
+			stats->numTLBMissHit++;
     	    DEBUG('a', "*** no valid TLB entry found for this virtual page!\n");
     	    return PageFaultException;		// really, this is a TLB fault,
 						// the page may be in memory,
 						// but not in the TLB
-	}
+		}
     }
 
     if (entry->readOnly && writing) {	// trying to write to a read-only page

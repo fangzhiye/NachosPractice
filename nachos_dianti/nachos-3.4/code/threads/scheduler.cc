@@ -62,7 +62,10 @@ Scheduler::ReadyToRun (Thread *thread)
     //modify by fang//
     //事实上如果我这有新加的一个线程也会调用ReadyToRun()方法
     //根据thread时间片的使用情况放置不同的队列中
-    if(thread->usedTimeSlices<2)Q1TimeSlices->Append((void*)thread);
+    if(thread->usedTimeSlices<2){
+        printf("add new thread\n");
+            Q1TimeSlices->Append((void*)thread);
+        }
     else if(thread->usedTimeSlices >=2 && thread->usedTimeSlices<6)
         Q2TimeSlices->Append((void*)thread);
     else
