@@ -62,11 +62,21 @@ Machine::Machine(bool debug)
     for (i = 0; i < MemorySize; i++)
       	mainMemory[i] = 0;
 #ifdef USE_TLB
+       printf(" use tlb\n");
     tlb = new TranslationEntry[TLBSize];
-    for (i = 0; i < TLBSize; i++)
-	tlb[i].valid = FALSE;
+  
+   for(int j = 0; j < NumPhysPages;j++){
+     bitmap[j] = 0;
+   }
+  //  printf("he\n");
+    for (i = 0; i < TLBSize; i++){
+        LRU_queue[i] = i+1;
+        tlb[i].valid = FALSE;
+    }
+	
     pageTable = NULL;
 #else	// use linear page table
+    printf("no use tlb\n");
     tlb = NULL;
     pageTable = NULL;
 #endif
@@ -74,7 +84,27 @@ Machine::Machine(bool debug)
     singleStep = debug;
     CheckEndian();
 }
+ int Machine::find(){
+    for(int i = 0; i < NumPhysPages;i++){
+        if(bitmap[i] ==0){
+            bitmap[i] = 1;
+            printf("allocate memory %d\n",i);
+            return i;
+        }
+    }
+    return -1;
+ }
 
+ void Machine::clear(){
+    for(int i=0; i<pageTableSize;i++){
+        int current = pageTable[i].physicalPage;
+       // printf("%d\n",current );
+        if(bitmap[current] == 1){
+            printf("deallocate memory %d\n",current);
+            bitmap[current] = 0;
+        }
+    }
+ }
 //----------------------------------------------------------------------
 // Machine::~Machine
 // 	De-allocate the data structures used to simulate user program execution.

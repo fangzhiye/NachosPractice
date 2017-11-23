@@ -12,7 +12,7 @@
 #define STATS_H
 
 #include "copyright.h"
-
+#include "machine.h"
 // The following class defines the statistics that are to be kept
 // about Nachos behavior -- how much time (ticks) elapsed, how
 // many user instructions executed, etc.
@@ -37,7 +37,9 @@ class Statistics {
     int numPacketsRecvd;	// number of packets received over the network
 
     Statistics(); 		// initialize everything to zero
-
+   
+    int numTLBHit;
+    int numTLBMissHit;
     void Print();		// print collected statistics
 };
 
@@ -50,11 +52,12 @@ class Statistics {
 // these time constants are none too exact.
 
 #define UserTick 	1	// advance for each user-level instruction 
-#define SystemTick 	10 	// advance each time interrupts are enabled
+//#define SystemTick 	10 	// advance each time interrupts are enabled
+#define SystemTick  10  // advance each time interrupts are enabled 因为并不在用户态上执行代码，所以就时钟就一个一个Tick advance
 #define RotationTime 	500 	// time disk takes to rotate one sector
 #define SeekTime 	500    	// time disk takes to seek past one track
 #define ConsoleTime 	100	// time to read or write one character
 #define NetworkTime 	100   	// time to send or receive one packet
-#define TimerTicks 	100    	// (average) time between timer interrupts
-
+//#define TimerTicks 	100    	// (average) time between timer interrupts
+#define TimerTicks  100//        每5 tick加入一时间中断
 #endif // STATS_H

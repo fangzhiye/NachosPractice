@@ -41,6 +41,9 @@ Thread::Thread(char* threadName)
 #ifdef USER_PROGRAM
     space = NULL;
 #endif
+////////////////////////////////// modify by fang//////////////////////////////////////
+    usedTimeSlices = 0;
+///////////////////////////////////////////////////////////////////////////////////////
 }
 
 //----------------------------------------------------------------------
@@ -90,11 +93,14 @@ Thread::Fork(VoidFunctionPtr func, void *arg)
     DEBUG('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n",
 	  name, (int) func, (int*) arg);
     
-    StackAllocate(func, arg);
+    StackAllocate(func, arg);//重要的函数
 
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
+    //modify by fang
+    //fork一个新线程的时候会将当前线程加入队列中
     scheduler->ReadyToRun(this);	// ReadyToRun assumes that interrupts 
 					// are disabled!
+    /////
     (void) interrupt->SetLevel(oldLevel);
 }    
 
@@ -174,18 +180,24 @@ Thread::Finish ()
 void
 Thread::Yield ()
 {
+   // printf("here1");
     Thread *nextThread;
+   // printf("here");
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
-    
+    //printf("here");
     ASSERT(this == currentThread);
     
     DEBUG('t', "Yielding thread \"%s\"\n", getName());
-    
+   // printf("here1");
+    DEBUG('t', "here 2");
     nextThread = scheduler->FindNextToRun();
+    DEBUG('t', "here 3");
+   // printf("here");
     if (nextThread != NULL) {
 	scheduler->ReadyToRun(this);
 	scheduler->Run(nextThread);
     }
+
     (void) interrupt->SetLevel(oldLevel);
 }
 
@@ -214,14 +226,15 @@ Thread::Sleep ()
     Thread *nextThread;
     
     ASSERT(this == currentThread);
-    ASSERT(interrupt->getLevel() == IntOff);
+  //  interrupt->SetLevel(IntOff);
+    ASSERT(interrupt->getLevel() == IntOff);//如果是IntOff则继续执行 
     
     DEBUG('t', "Sleeping thread \"%s\"\n", getName());
 
     status = BLOCKED;
     while ((nextThread = scheduler->FindNextToRun()) == NULL)
 	interrupt->Idle();	// no one to run, wait for an interrupt
-        
+                        //如果为空的话就用Idle()
     scheduler->Run(nextThread); // returns when we've been signalled
 }
 
@@ -252,6 +265,7 @@ void ThreadPrint(int arg){ Thread *t = (Thread *)arg; t->Print(); }
 void
 Thread::StackAllocate (VoidFunctionPtr func, void *arg)
 {
+    //对线程的stack初始化
     stack = (int *) AllocBoundedArray(StackSize * sizeof(int));
 
 #ifdef HOST_SNAKE
@@ -276,11 +290,12 @@ Thread::StackAllocate (VoidFunctionPtr func, void *arg)
     *stack = STACK_FENCEPOST;
 #endif  // HOST_SNAKE
     
-    machineState[PCState] = (int*)ThreadRoot;
+    //将一些函数的地址存在了machineState数组中
+    machineState[PCState] = (int*)ThreadRoot;//这是第一个要执行的函数
     machineState[StartupPCState] = (int*)InterruptEnable;
     machineState[InitialPCState] = (int*)func;
     machineState[InitialArgState] = arg;
-    machineState[WhenDonePCState] = (int*)ThreadFinish;
+    machineState[WhenDonePCState] = (int*)ThreadFinish;//这是最后一个要执行的函数
 }
 
 #ifdef USER_PROGRAM

@@ -181,7 +181,10 @@ class Machine {
 
     TranslationEntry *pageTable;
     unsigned int pageTableSize;
-
+    int LRU_queue[TLBSize];
+    int bitmap[NumPhysPages];
+    int find();
+    void clear();
   private:
     bool singleStep;		// drop back into the debugger after each
 				// simulated instruction

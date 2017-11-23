@@ -22,6 +22,12 @@
 
 #include "copyright.h"
 #include "utility.h"
+#include "../threads/thread.h"
+//#include "system.h"
+//class Thread;
+//modify by fang//
+extern Thread *currentThread;     // the thread holding the CPU,当前运行线程
+////
 
 // The following class defines a hardware timer. 
 class Timer {

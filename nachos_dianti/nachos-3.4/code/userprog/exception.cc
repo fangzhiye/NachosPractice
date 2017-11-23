@@ -52,11 +52,97 @@ void
 ExceptionHandler(ExceptionType which)
 {
     int type = machine->ReadRegister(2);
-
+//
     if ((which == SyscallException) && (type == SC_Halt)) {
 	DEBUG('a', "Shutdown, initiated by user program.\n");
    	interrupt->Halt();
-    } else {
+    } 
+    else if(which == PageFaultException){
+    	if(machine->tlb != NULL){
+    		//处理快表失效
+    		//printf("11\n");
+    		int vpn = (unsigned) machine->registers[BadVAddrReg]/PageSize;
+    		int position = -1;
+    		for (int i = 0; i < TLBSize; i++){
+    			if(machine->tlb[i].valid == FALSE){
+    				position = i;
+    				break;
+    			}
+    		}
+    		//FIFO
+    		/*if(position == -1){
+    			position = TLBSize - 1;
+    			for(int i = 0; i < TLBSize -1; i++)
+    				machine->tlb[i] = machine->tlb[i+1];
+    		}*/
+    		//LRU
+    		if(position == -1){
+    			for(int i = 0; i < TLBSize; i++){
+    				if(machine->LRU_queue[i] == TLBSize){
+    					position = i;
+    					break;
+    				}
+    			}
+    		}
+    		machine->LRU_queue[position] = 1;
+    		for(int i = 0; i<TLBSize;i++){
+    			if(i==position)continue;
+    			if(machine->LRU_queue[i]==-1)continue;
+    			machine->LRU_queue[i]++;
+    		}
+    		machine->tlb[position].valid = true;
+    		machine->tlb[position].virtualPage = vpn;
+    		machine->tlb[position].physicalPage = machine->pageTable[vpn].physicalPage;
+    		machine->tlb[position].use = FALSE;
+    		machine->tlb[position].dirty = FALSE;
+    		machine->tlb[position].readOnly = FALSE;
+    	}else{
+    	//	
+    		OpenFile* openfile = fileSystem->Open("virtual_memory");
+    		//printf("12\n");
+    		if(openfile == NULL)ASSERT(false);
+    		int vpn = (unsigned)machine->registers[BadVAddrReg]/PageSize;
+
+    		//printf("11\n");
+    		int pos = machine->find();
+    		printf("pagefault in vpn: %d ppn(pos):%d \n",vpn,pos );
+    		//printf("12\n");
+    		if(pos == -1){
+    			pos = 0;
+    			for(int j = 0; j < machine->pageTableSize;j++){
+    				if(machine->pageTable[j].physicalPage == 0){
+    					if(machine->pageTable[j].dirty == TRUE){
+    						openfile->WriteAt(&(machine->mainMemory[pos*PageSize]),
+    							PageSize,machine->pageTable[j].virtualPage*PageSize);//写回物理页面
+    						machine->pageTable[j].valid = FALSE;
+    						break;
+    					}
+    				}
+    			}
+    		}
+    		openfile->ReadAt(&(machine->mainMemory[pos*PageSize]),PageSize,vpn*PageSize);
+    		machine->pageTable[vpn].valid = TRUE;
+    		machine->pageTable[vpn].physicalPage = pos;
+    		machine->pageTable[vpn].use = FALSE;
+    		machine->pageTable[vpn].dirty = FALSE;
+    		machine->pageTable[vpn].readOnly = FALSE;
+    		delete openfile;
+    		//处理页表失效
+    		//ASSERT(FALSE);
+    	}
+    }
+    else if((which == SyscallException) && (type == SC_Exit)){
+    	printf("programme exit\n");
+    	printf("%s thread end\n",currentThread->getName());
+    	//currentThread->Print();
+    	//printf("789\n");
+    	machine->clear();
+    //	printf("clear end\n");
+    	int NextPC = machine->ReadRegister(NextPCReg);
+    	machine->WriteRegister(PCReg,NextPC);
+    	currentThread->Finish();
+    }
+    else  {
 	printf("Unexpected user mode exception %d %d\n", which, type);
 	ASSERT(FALSE);
     }

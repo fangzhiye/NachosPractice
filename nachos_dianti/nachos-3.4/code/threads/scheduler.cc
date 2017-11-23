@@ -30,6 +30,9 @@
 Scheduler::Scheduler()
 { 
     readyList = new List; 
+    Q1TimeSlices = new List;
+    Q2TimeSlices = new List;
+    Q3TimeSlices = new List;
 } 
 
 //----------------------------------------------------------------------
@@ -52,11 +55,26 @@ Scheduler::~Scheduler()
 
 void
 Scheduler::ReadyToRun (Thread *thread)
-{
+{   //加入就绪队列函数中
     DEBUG('t', "Putting thread %s on ready list.\n", thread->getName());
 
     thread->setStatus(READY);
-    readyList->Append((void *)thread);
+    //modify by fang//
+    //事实上如果我这有新加的一个线程也会调用ReadyToRun()方法
+    //根据thread时间片的使用情况放置不同的队列中
+    if(thread->usedTimeSlices<2){
+        printf("add new thread\n");
+            Q1TimeSlices->Append((void*)thread);
+        }
+    else if(thread->usedTimeSlices >=2 && thread->usedTimeSlices<6)
+        Q2TimeSlices->Append((void*)thread);
+    else
+        Q3TimeSlices->Append((void*)thread);
+    //如果新创件线程的话，当前线程是2 -3队列，那么当前线程可以抢占
+    if(thread != currentThread && currentThread->usedTimeSlices > 2)
+        currentThread->Yield();
+   // readyList->Append((void *)thread);
+    ////
 }
 
 //----------------------------------------------------------------------
@@ -70,7 +88,16 @@ Scheduler::ReadyToRun (Thread *thread)
 Thread *
 Scheduler::FindNextToRun ()
 {
-    return (Thread *)readyList->Remove();
+    //modify by fang
+    if(!Q1TimeSlices->IsEmpty())
+        return (Thread *)Q1TimeSlices->Remove();
+    else if(!Q2TimeSlices->IsEmpty())
+        return (Thread *)Q2TimeSlices->Remove();
+    else if(!Q3TimeSlices->IsEmpty())
+        return (Thread *)Q3TimeSlices->Remove();
+    else return NULL;
+    //return (Thread *)readyList->Remove();
+    ////
 }
 
 //----------------------------------------------------------------------
@@ -113,7 +140,7 @@ Scheduler::Run (Thread *nextThread)
     // a bit to figure out what happens after this, both from the point
     // of view of the thread and from the perspective of the "outside world".
 
-    SWITCH(oldThread, nextThread);
+    SWITCH(oldThread, nextThread);//关建就是这了，保存旧线程的状态，并切换新线程
     
     DEBUG('t', "Now in thread \"%s\"\n", currentThread->getName());
 

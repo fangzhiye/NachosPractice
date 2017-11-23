@@ -61,14 +61,18 @@ Semaphore::~Semaphore()
 //	when it is called.
 //----------------------------------------------------------------------
 
+//进程同步具体的讲，就是一个进程运行到某一点的时候，要求另一伙伴进程为它提供消息，
+//在未获得消息之前，该进程进入阻塞态，获得消息后被唤醒进入就绪态
 void
 Semaphore::P()
 {
     IntStatus oldLevel = interrupt->SetLevel(IntOff);	// disable interrupts
     
+    //具体而言，当value为0的时候说明信号号不可用，也可说该进程要获得的
+    //消息还未满足，所以该进程先阻塞
     while (value == 0) { 			// semaphore not available
 	queue->Append((void *)currentThread);	// so go to sleep
-	currentThread->Sleep();
+	currentThread->Sleep();//如果当前进程Sleep的话，那么scheduler会调度就绪队列的下一个进程运行
     } 
     value--; 					// semaphore available, 
 						// consume its value
@@ -87,26 +91,92 @@ Semaphore::P()
 void
 Semaphore::V()
 {
+    //唤醒一个进程并，增加value
     Thread *thread;
-    IntStatus oldLevel = interrupt->SetLevel(IntOff);
 
-    thread = (Thread *)queue->Remove();
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+ //   if(value >= 0)
+    thread = (Thread *)queue->Remove();//唤醒一个等待的线程并将其加入就绪队列中
     if (thread != NULL)	   // make thread ready, consuming the V immediately
 	scheduler->ReadyToRun(thread);
     value++;
+
     (void) interrupt->SetLevel(oldLevel);
 }
 
 // Dummy functions -- so we can compile our later assignments 
 // Note -- without a correct implementation of Condition::Wait(), 
 // the test case in the network assignment won't work!
-Lock::Lock(char* debugName) {}
+Lock::Lock(char* debugName) {
+    //利用Semaphore实现锁
+    name = debugName;
+    lockSemaphore = new Semaphore(debugName, 1);
+}
 Lock::~Lock() {}
-void Lock::Acquire() {}
-void Lock::Release() {}
 
-Condition::Condition(char* debugName) { }
+//这里锁只能被当前thread使用，如果现在锁被其它线程占用的话，就要初始化
+void Lock::Acquire() {
+    if( heldThread != currentThread)
+    {
+        lockSemaphore->value = 1;
+      //  Thread* thread = (Thread *)lockSemaphore->queue->Remove();//唤醒一个等待的线程并将其加入就绪队列中
+       // if (thread != NULL)    // make thread ready, consuming the V immediately
+      //  scheduler->ReadyToRun(thread);
+        //printf("he\n");
+    }
+  // 
+    lockSemaphore->P();
+    Thread* temp;
+    temp = currentThread;
+    //在这会发生中端的
+    heldThread = temp;
+}
+
+void Lock::Release() {
+    heldThread = NULL;
+    lockSemaphore->V();
+    //printf("here\n");
+}
+
+bool Lock::isHeldByCurrentThread(){
+    return currentThread == heldThread;
+}
+
+Condition::Condition(char* debugName) {
+    name = debugName;
+    waitQueue = new List();
+ }
+
 Condition::~Condition() { }
-void Condition::Wait(Lock* conditionLock) { ASSERT(FALSE); }
-void Condition::Signal(Lock* conditionLock) { }
-void Condition::Broadcast(Lock* conditionLock) { }
+
+void Condition::Wait(Lock* conditionLock) { 
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+    conditionLock->Release();
+    waitQueue->Append((Thread*)currentThread);
+    currentThread->Sleep();                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+    conditionLock->Acquire();
+    interrupt->SetLevel(oldLevel);
+ }
+
+void Condition::Signal(Lock* conditionLock) {
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+    Thread* thread;
+    if(conditionLock->isHeldByCurrentThread()){
+        thread = (Thread*)waitQueue->Remove();
+        if(thread != NULL){
+            scheduler->ReadyToRun(thread);
+        }
+    }
+}
+void Condition::Broadcast(Lock* conditionLock) {
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+    Thread *thread = NULL;
+    if(conditionLock->isHeldByCurrentThread()){
+        thread = (Thread*)waitQueue->Remove();
+        while(thread != NULL){
+            scheduler->ReadyToRun(thread);
+            thread = (Thread*)waitQueue->Remove();
+        }
+    }
+    interrupt->SetLevel(oldLevel);
+ }

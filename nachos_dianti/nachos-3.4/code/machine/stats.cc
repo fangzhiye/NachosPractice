@@ -22,6 +22,8 @@ Statistics::Statistics()
     numDiskReads = numDiskWrites = 0;
     numConsoleCharsRead = numConsoleCharsWritten = 0;
     numPageFaults = numPacketsSent = numPacketsRecvd = 0;
+    numTLBHit = 0;
+    numTLBMissHit = 0;
 }
 
 //----------------------------------------------------------------------
@@ -41,4 +43,6 @@ Statistics::Print()
     printf("Paging: faults %d\n", numPageFaults);
     printf("Network I/O: packets received %d, sent %d\n", numPacketsRecvd, 
 	numPacketsSent);
+    printf("the Number of tlbHit: %d,  tlbMissHit:%d, hitRate:%f\n", numTLBHit,numTLBMissHit,(float)numTLBHit/(numTLBHit+numTLBMissHit));
+   // printf("\n");
 }

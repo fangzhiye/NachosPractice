@@ -128,20 +128,23 @@ Initialize(int argc, char **argv)
 	}
 #endif
     }
-
+//设置了一些控制参数
+//时钟、中断器、调度器之类的
     DebugInit(debugArgs);			// initialize DEBUG messages
     stats = new Statistics();			// collect statistics
     interrupt = new Interrupt;			// start up interrupt handling
     scheduler = new Scheduler();		// initialize the ready queue
+    //只有randomYield的候才有时间中断
     if (randomYield)				// start the timer (if needed)
-	timer = new Timer(TimerInterruptHandler, 0, randomYield);
+	timer = new Timer(TimerInterruptHandler, 0, randomYield);//实例化定时器
 
     threadToBeDestroyed = NULL;
 
     // We didn't explicitly allocate the current thread we are running in.
     // But if it ever tries to give up the CPU, we better have a Thread
     // object to save its state. 
-    currentThread = new Thread("main");		
+    //这里定义了一个main线程，并将其的状态设为RUNNING
+    currentThread = new Thread("main");	//主线程	
     currentThread->setStatus(RUNNING);
 
     interrupt->Enable();
