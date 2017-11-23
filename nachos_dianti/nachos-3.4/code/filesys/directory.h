@@ -2,6 +2,7 @@
 //	Data structures to manage a UNIX-like directory of file names.
 // 
 //      A directory is a table of pairs: <file name, sector #>,
+//这目录就是一个table[filename,sector]就是说这个filename的fileheader在哪个sector
 //	giving the name of each file in the directory, and 
 //	where to find its file header (the data structure describing
 //	where to find the file's data blocks) on disk.
@@ -28,7 +29,7 @@
 //
 // Internal data structures kept public so that Directory operations can
 // access them directly.
-
+//table的每一项
 class DirectoryEntry {
   public:
     bool inUse;				// Is this directory entry in use?
@@ -71,7 +72,7 @@ class Directory {
 					//  of the directory -- all the file
 					//  names and their contents.
 
-  private:
+ // private:
     int tableSize;			// Number of directory entries
     DirectoryEntry *table;		// Table of pairs: 
 					// <file name, file header location> 

@@ -46,10 +46,10 @@
 //
 // The track buffer simulation can be disabled by compiling with -DNOTRACKBUF
 
-#define SectorSize 		128	// number of bytes per disk sector
-#define SectorsPerTrack 	32	// number of sectors per disk track 
-#define NumTracks 		32	// number of tracks per disk
-#define NumSectors 		(SectorsPerTrack * NumTracks)
+#define SectorSize 		128	// number of bytes per disk sector 每个扇区共128字节
+#define SectorsPerTrack 	32	// number of sectors per disk track 每个Track几个扇区
+#define NumTracks 		32	// number of tracks per disk//一共32个Track
+#define NumSectors 		(SectorsPerTrack * NumTracks)//扇区数
 					// total # of sectors per disk
 
 class Disk {

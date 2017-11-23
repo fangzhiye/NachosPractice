@@ -86,9 +86,11 @@ class FileSystem {
     void Print();			// List all the files and their contents
 
   private:
+    //位图文件
    OpenFile* freeMapFile;		// Bit map of free disk blocks,
 					// represented as a file
    OpenFile* directoryFile;		// "Root" directory -- list of 
+   //目录文件
 					// file names, represented as a file
 };
 

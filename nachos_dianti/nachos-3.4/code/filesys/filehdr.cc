@@ -145,6 +145,38 @@ FileHeader::Print()
 		printf("\\%x", (unsigned char)data[j]);
 	}
         printf("\n"); 
+        printf("sector_position\n",sector_position);
+        printf("type : %s\n",type );
+        printf("create_time : %s\n",create_time);
+        printf("last_visit_time: %s\n",last_visit_time);
+        printf("last_modified_time:%s\n",last_modified_time);
     }
     delete [] data;
 }
+void
+FileHeader::set_create_time(){
+    time_t timep;
+    time(&timep);
+    strncpy(create_time,asctime(gmtime(&timep)),25);
+    create_time[24] = '\0';
+    printf("create file %s\n",create_time);
+}
+
+void
+FileHeader::set_last_visit_time(){
+    time_t timep;
+    time(&timep);
+    strncpy(last_visit_time,asctime(gmtime(&timep)),25);
+    last_visit_time[24] = '\0';
+    printf("last visit file %s\n",last_visit_time);
+}
+
+void FileHeader::set_last_modified_time(){
+    time_t timep;
+    time(&timep);
+    strncpy(last_modified_time,asctime(gmtime(&timep)),25);
+    last_modified_time[24] = '\0';
+    printf("last modified file %s\n",last_modified_time);
+}
+
+

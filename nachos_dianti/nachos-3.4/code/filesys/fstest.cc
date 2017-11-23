@@ -57,7 +57,6 @@ Copy(char *from, char *to)
     
     openFile = fileSystem->Open(to);
     ASSERT(openFile != NULL);
-    
 // Copy the data in TransferSize chunks
     buffer = new char[TransferSize];
     while ((amountRead = fread(buffer, sizeof(char), TransferSize, fp)) > 0)

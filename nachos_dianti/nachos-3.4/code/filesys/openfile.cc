@@ -31,7 +31,11 @@ OpenFile::OpenFile(int sector)
 { 
     hdr = new FileHeader;
     hdr->FetchFrom(sector);
+   // for(int i = 0; i < hdr->)
+    //这这个sector保存的文件头信息保存在hdr中
+
     seekPosition = 0;
+    hdr->sector_position = sector;
 }
 
 //----------------------------------------------------------------------
@@ -116,10 +120,11 @@ OpenFile::Write(char *into, int numBytes)
 int
 OpenFile::ReadAt(char *into, int numBytes, int position)
 {
+
     int fileLength = hdr->FileLength();
     int i, firstSector, lastSector, numSectors;
     char *buf;
-
+    //printf("numBytes%d position %d fileLength%d\n",numBytes,position,fileLength);
     if ((numBytes <= 0) || (position >= fileLength))
     	return 0; 				// check request
     if ((position + numBytes) > fileLength)		
@@ -133,12 +138,16 @@ OpenFile::ReadAt(char *into, int numBytes, int position)
 
     // read in all the full and partial sectors that we need
     buf = new char[numSectors * SectorSize];
+
     for (i = firstSector; i <= lastSector; i++)	
         synchDisk->ReadSector(hdr->ByteToSector(i * SectorSize), 
 					&buf[(i - firstSector) * SectorSize]);
 
     // copy the part we want
     bcopy(&buf[position - (firstSector * SectorSize)], into, numBytes);
+
+    hdr->set_last_visit_time();
+    hdr->WriteBack(hdr->sector_position);
     delete [] buf;
     return numBytes;
 }
@@ -150,9 +159,10 @@ OpenFile::WriteAt(char *from, int numBytes, int position)
     int i, firstSector, lastSector, numSectors;
     bool firstAligned, lastAligned;
     char *buf;
-
+   
     if ((numBytes <= 0) || (position >= fileLength))
 	return 0;				// check request
+
     if ((position + numBytes) > fileLength)
 	numBytes = fileLength - position;
     DEBUG('f', "Writing %d bytes at %d, from file of length %d.\n", 	
@@ -181,6 +191,9 @@ OpenFile::WriteAt(char *from, int numBytes, int position)
     for (i = firstSector; i <= lastSector; i++)	
         synchDisk->WriteSector(hdr->ByteToSector(i * SectorSize), 
 					&buf[(i - firstSector) * SectorSize]);
+    hdr->set_last_visit_time();
+    hdr->set_last_modified_time();
+    hdr->WriteBack(hdr->sector_position);
     delete [] buf;
     return numBytes;
 }

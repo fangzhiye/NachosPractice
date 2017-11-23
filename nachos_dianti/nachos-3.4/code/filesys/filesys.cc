@@ -185,26 +185,73 @@ FileSystem::Create(char *name, int initialSize)
     directory = new Directory(NumDirEntries);
     directory->FetchFrom(directoryFile);
 
-    if (directory->Find(name) != -1)
+    if (directory->Find(name) != -1){
       success = FALSE;			// file is already in directory
+     // printf("here\n");
+    }
     else {	
         freeMap = new BitMap(NumSectors);
         freeMap->FetchFrom(freeMapFile);
+
+       
         sector = freeMap->Find();	// find a sector to hold the file header
     	if (sector == -1) 		
             success = FALSE;		// no free block for file header 
         else if (!directory->Add(name, sector))
             success = FALSE;	// no space in directory
 	else {
+       // printf("%s\n", );
+       // for(int i = 0; i < directory->tableSize;i++)
+      //  if(directory->table[i].inUse)printf("filesys.cc: %d filename: %s inUse:True\n",i,directory->table[i].name);
+      //  else printf("filesys.cc: sector: %d filename: %s inUse:False\n",i,directory->table[i].name);
+
     	    hdr = new FileHeader;
 	    if (!hdr->Allocate(freeMap, initialSize))
             	success = FALSE;	// no space on disk for data
 	    else {	
 	    	success = TRUE;
+////////////////////////////////////////////
+            
+            //根据文件名获得文件类型
+    int dot_position = 0;
+    for(int i = 0; i < strlen(name); i++){
+        if(name[i] == '.'){
+            dot_position = i;
+            break;
+        }
+    }
+    int j = 0;
+    for(int i = dot_position + 1; i < strlen(name); i++){
+        hdr->type[j] = name[i];
+        j++;
+    }
+        hdr->type[j] = '\0';
+        hdr->set_create_time();
+        hdr->set_last_visit_time();
+        hdr->set_last_modified_time();
+        hdr->sector_position = sector;
+/////////////////////////////////////////////////////////
 		// everthing worked, flush all changes back to disk
-    	    	hdr->WriteBack(sector); 		
-    	    	directory->WriteBack(directoryFile);
-    	    	freeMap->WriteBack(freeMapFile);
+    	hdr->WriteBack(sector); 		
+    	directory->WriteBack(directoryFile);
+        freeMap->WriteBack(freeMapFile);
+        for(int i = 0; i < directory->tableSize;i++)
+        if(directory->table[i].inUse)printf("tsector: %d filename: %s inUse:True\n",i,directory->table[i].name);
+        else printf("filesys.cc: sector: %d filename: %s inUse:False\n",i,directory->table[i].name);
+
+        ////////////////////////////////////
+      /*  Directory *testdirectory = new Directory(NumDirEntries);
+        OpenFile *testopenFile = NULL;
+        int sector;
+        testdirectory->FetchFrom(directoryFile);
+        for(int i = 0; i < testdirectory->tableSize;i++)
+        if(testdirectory->table[i].inUse)printf("testsector: %d filename: %s inUse:True\n",i,testdirectory->table[i].name);
+        else printf("testfilesys.cc: sector: %d filename: %s inUse:False\n",i,testdirectory->table[i].name);
+*/
+
+        ////////////////////////////////////
+    	
+
 	    }
             delete hdr;
 	}
@@ -232,10 +279,22 @@ FileSystem::Open(char *name)
     int sector;
 
     DEBUG('f', "Opening file %s\n", name);
+
     directory->FetchFrom(directoryFile);
+   /* for(int i = 0; i < directory->tableSize;i++)
+        if(directory->table[i].inUse)printf("sector: %d filename: %s inUse:True\n",i,directory->table[i].name);
+        else printf("filesys.cc: sector: %d filename: %s inUse:False\n",i,directory->table[i].name);
+   
+*/
+   
+       
+        
     sector = directory->Find(name); 
+    // printf("sector: %d\n",sector );
+    //这返回sector = -1
     if (sector >= 0) 		
 	openFile = new OpenFile(sector);	// name was found in directory 
+
     delete directory;
     return openFile;				// return NULL if not found
 }

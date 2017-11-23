@@ -88,6 +88,7 @@ main(int argc, char **argv)
     (void) Initialize(argc, argv);
     
 #ifdef THREADS
+
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
       argCount = 1;
       switch (argv[0][1]) {
@@ -127,9 +128,12 @@ main(int argc, char **argv)
 	}
 #endif // USER_PROGRAM
 #ifdef FILESYS
+	//printf("1210.10010101010101file\n");
 	if (!strcmp(*argv, "-cp")) { 		// copy from UNIX to Nachos
 	    ASSERT(argc > 2);
+
 	    Copy(*(argv + 1), *(argv + 2));
+
 	    argCount = 3;
 	} else if (!strcmp(*argv, "-p")) {	// print a Nachos file
 	    ASSERT(argc > 1);

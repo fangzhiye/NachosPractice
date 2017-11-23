@@ -37,7 +37,7 @@
 
 Directory::Directory(int size)
 {
-    table = new DirectoryEntry[size];
+    table = new DirectoryEntry[size];//目录table的大小
     tableSize = size;
     for (int i = 0; i < tableSize; i++)
 	table[i].inUse = FALSE;
@@ -56,14 +56,26 @@ Directory::~Directory()
 //----------------------------------------------------------------------
 // Directory::FetchFrom
 // 	Read the contents of the directory from disk.
-//
+//  读取目录的内容
 //	"file" -- file containing the directory contents
 //----------------------------------------------------------------------
 
 void
 Directory::FetchFrom(OpenFile *file)
 {
+    //printf("4\n");
+    //从file读到table中
     (void) file->ReadAt((char *)table, tableSize * sizeof(DirectoryEntry), 0);
+   // for(int i = 0; i < tableSize;i++)
+   //     if(table[i].inUse)printf("sector: %d filename: %s inUse:True\n",i,table[i].name);
+    //    else printf("directory.cc: sector: %d filename: %s inUse:False\n",i,table[i].name);
+    /*
+
+    for (int i = 0; i < tableSize; i++)
+        if(file->table[i].inUse)
+            printf(" %d %s",i,file->table[i].name);
+            */
+       // else printf("785\n");
 }
 
 //----------------------------------------------------------------------
@@ -90,9 +102,16 @@ Directory::WriteBack(OpenFile *file)
 int
 Directory::FindIndex(char *name)
 {
-    for (int i = 0; i < tableSize; i++)
-        if (table[i].inUse && !strncmp(table[i].name, name, FileNameMaxLen))
-	    return i;
+    for (int i = 0; i < tableSize; i++){
+        //if(table[i].inUse)printf("i:%d,name:%s,inUSE:TRUE\n",i,table[i].name );
+        //else printf("i:%d,name:%s,inUSE:FALSE\n",i,table[i].name );
+        if (table[i].inUse && !strncmp(table[i].name, name, FileNameMaxLen)){
+
+            return i;
+        }
+        
+    }
+        
     return -1;		// name not in directory
 }
 
@@ -129,14 +148,18 @@ Directory::Find(char *name)
 bool
 Directory::Add(char *name, int newSector)
 { 
+    //printf("name:%s newSector:%d\n",name, newSector );
     if (FindIndex(name) != -1)
 	return FALSE;
 
     for (int i = 0; i < tableSize; i++)
         if (!table[i].inUse) {
+            //printf("name:%s, i:%d\n",name,i );
             table[i].inUse = TRUE;
+            //if(table[i].inUse)printf("directory:cc table i:%d is inUse\n",i );
             strncpy(table[i].name, name, FileNameMaxLen); 
             table[i].sector = newSector;
+
         return TRUE;
 	}
     return FALSE;	// no space.  Fix when we have extensible files.
